@@ -32,7 +32,7 @@ export const AI_CONFIG = {
 
 export const CONVERSATION = {
   HISTORY_TTL_SECONDS: 3600, // 1 hour
-  MAX_HISTORY_MESSAGES: 10,
+  MAX_HISTORY_MESSAGES: 5,
 };
 
 export const QUEUE = {
