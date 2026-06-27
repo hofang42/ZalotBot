@@ -16,8 +16,8 @@ export const INPUT_LIMITS = {
 export const AI_CONFIG = {
   // Llama 3.3 70B is highly recommended for reasoning on Groq
   GROQ_MODEL: 'llama-3.3-70b-versatile',
-  // Vision model for handling image inputs
-  GEMINI_VISION_MODEL: 'gemini-2.0-flash',
+  // Qwen vision model for handling image inputs on Groq
+  GROQ_VISION_MODEL: 'qwen/qwen3.6-27b',
   MAX_OUTPUT_TOKENS: 1024,
   TIMEOUT_MS: 20000,
 };
