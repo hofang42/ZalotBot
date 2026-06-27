@@ -2,17 +2,14 @@ import Joi from 'joi';
 import logger from '../utils/logger.js';
 
 const webhookSchema = Joi.object({
-  ok: Joi.boolean(),
-  result: Joi.object({
-    event_name: Joi.string().required(),
-    message: Joi.object({
-      message_id: Joi.string().required(),
-      text: Joi.string().allow('', null),
-      chat: Joi.object({
-        id: Joi.string().required(),
-      }).unknown(true),
-    }).unknown(true).optional()
-  }).unknown(true).required()
+  event_name: Joi.string().required(),
+  message: Joi.object({
+    message_id: Joi.string().required(),
+    text: Joi.string().allow('', null),
+    chat: Joi.object({
+      id: Joi.string().required(),
+    }).unknown(true),
+  }).unknown(true).optional()
 }).unknown(true);
 
 export const validatePayload = (req, res, next) => {

@@ -10,15 +10,12 @@ describe('Webhook Validation (ZBP)', () => {
   it('should pass valid text message payload', () => {
     const req = {
       body: {
-        ok: true,
-        result: {
-          event_name: 'message.text.received',
-          message: {
-            message_id: "msg1",
-            chat: { id: "user1" },
-            text: "Hello",
-            date: 123456789
-          }
+        event_name: 'message.text.received',
+        message: {
+          message_id: "msg1",
+          chat: { id: "user1" },
+          text: "Hello",
+          date: 123456789
         }
       }
     };
@@ -32,12 +29,9 @@ describe('Webhook Validation (ZBP)', () => {
   it('should reject invalid payload without event_name', () => {
     const req = {
       body: {
-        ok: true,
-        result: {
-          message: {
-            message_id: "msg1",
-            text: "Hello"
-          }
+        message: {
+          message_id: "msg1",
+          text: "Hello"
         }
       }
     };
@@ -57,14 +51,11 @@ describe('Webhook Controller (ZBP)', () => {
   it('should return 200 OK immediately and enqueue job', async () => {
     const req = {
       body: {
-        ok: true,
-        result: {
-          event_name: 'message.text.received',
-          message: {
-            message_id: "msg1",
-            chat: { id: "user1" },
-            text: "Hello"
-          }
+        event_name: 'message.text.received',
+        message: {
+          message_id: "msg1",
+          chat: { id: "user1" },
+          text: "Hello"
         }
       }
     };
@@ -78,6 +69,6 @@ describe('Webhook Controller (ZBP)', () => {
     await handleWebhook(req, res);
     
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(addMessageJob).toHaveBeenCalledWith(req.body.result);
+    expect(addMessageJob).toHaveBeenCalledWith(req.body);
   });
 });

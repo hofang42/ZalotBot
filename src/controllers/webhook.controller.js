@@ -7,7 +7,7 @@ import logger from '../utils/logger.js';
 export const handleWebhook = async (req, res) => {
   try {
     const payload = req.body;
-    const { event_name, message } = payload.result || {};
+    const { event_name, message } = payload;
 
     // Chỉ xử lý sự kiện có message text
     if (event_name === 'message.text.received' && message && message.text) {
@@ -17,7 +17,7 @@ export const handleWebhook = async (req, res) => {
       logger.info({ userId: chatId, msgId }, 'Received user text message');
       
       // Đẩy nguyên payload của event vào queue
-      await addMessageJob(payload.result);
+      await addMessageJob(payload);
     } else {
       logger.debug({ event_name }, 'Ignored non-text or unsupported event');
     }
