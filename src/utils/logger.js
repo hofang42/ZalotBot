@@ -16,7 +16,8 @@ const logger = pino({
     ],
     censor: '[REDACTED]'
   },
-  ...(isDev && {
+  // Vercel / AWS Lambda does not support pino-pretty well due to worker threads and bundling issues
+  ...(isDev && !process.env.VERCEL && {
     transport: {
       target: 'pino-pretty',
       options: {
