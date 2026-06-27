@@ -36,8 +36,9 @@ async function callGroqVision(userMessage, photoUrl, history, onFallback) {
     try {
       logger.debug(`Calling Groq API for Vision (${model})`);
 
+      let timeoutId;
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
+        timeoutId = setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
       });
 
       const groqPromise = groqAi.chat.completions.create({
@@ -48,10 +49,11 @@ async function callGroqVision(userMessage, photoUrl, history, onFallback) {
       });
 
       const response = await Promise.race([groqPromise, timeoutPromise]);
+      clearTimeout(timeoutId);
       return response.choices[0]?.message?.content;
     } catch (error) {
       lastError = error;
-      logger.warn({ model, err: error.message }, 'Groq vision model failed, trying next...');
+      logger.warn({ model, err: error.message, status: error.status }, 'Groq vision model failed, trying next...');
       // Continue to next model if timeout or rate limit
       if (error.status !== 429 && error.message !== 'AbortError') {
         throw error;
@@ -81,8 +83,9 @@ async function callGroqText(userMessage, history, onFallback) {
     try {
       logger.debug(`Calling Groq API for Text (${model})`);
 
+      let timeoutId;
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
+        timeoutId = setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
       });
 
       const groqPromise = groqAi.chat.completions.create({
@@ -93,10 +96,11 @@ async function callGroqText(userMessage, history, onFallback) {
       });
 
       const response = await Promise.race([groqPromise, timeoutPromise]);
+      clearTimeout(timeoutId);
       return response.choices[0]?.message?.content;
     } catch (error) {
       lastError = error;
-      logger.warn({ model, err: error.message }, 'Groq text model failed, trying next...');
+      logger.warn({ model, err: error.message, status: error.status }, 'Groq text model failed, trying next...');
       // Continue to next model if timeout or rate limit
       if (error.status !== 429 && error.message !== 'AbortError') {
         throw error;
@@ -133,7 +137,7 @@ export const generateResponse = async (userMessage, photoUrl = null, history = [
       return 'Xin lỗi, hệ thống đang quá tải và phản hồi chậm. Vui lòng thử lại sau.';
     }
     
-    logger.error({ err: error }, 'AI API Error');
+    logger.error({ err: error, status: error.status, message: error.message }, 'AI API Error Catch Block');
     if (error?.status === 429) {
       return 'Xin lỗi, hệ thống đang xử lý quá nhiều yêu cầu cùng lúc. Vui lòng thử lại sau ít phút.';
     }
