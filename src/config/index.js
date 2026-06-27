@@ -25,6 +25,10 @@ const config = {
   cerebras: {
     apiKey: process.env.CEREBRAS_API_KEY,
   },
+  cloudflare: {
+    accountId: process.env.CF_ACCOUNT_ID,
+    apiToken: process.env.CF_API_TOKEN,
+  },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
   },

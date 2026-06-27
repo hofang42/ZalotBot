@@ -1,5 +1,6 @@
 import Groq from 'groq-sdk';
 import Cerebras from '@cerebras/cerebras_cloud_sdk';
+import OpenAI from 'openai';
 import config from '../config/index.js';
 import { AI_CONFIG } from '../config/constants.js';
 import { SYSTEM_INSTRUCTION } from '../prompts/systemInstruction.js';
@@ -7,6 +8,7 @@ import logger from '../utils/logger.js';
 
 let groqAi;
 let cerebrasAi;
+let cloudflareAi;
 
 try {
   groqAi = new Groq({ apiKey: config.groq.apiKey });
@@ -20,6 +22,17 @@ try {
   }
 } catch (error) {
   logger.error({ err: error }, 'Failed to initialize Cerebras client');
+}
+
+try {
+  if (config.cloudflare?.apiToken && config.cloudflare?.accountId) {
+    cloudflareAi = new OpenAI({
+      apiKey: config.cloudflare.apiToken,
+      baseURL: `https://api.cloudflare.com/client/v4/accounts/${config.cloudflare.accountId}/ai/v1`,
+    });
+  }
+} catch (error) {
+  logger.error({ err: error }, 'Failed to initialize Cloudflare client');
 }
 
 async function callGroqVision(userMessage, photoUrl, history, onFallback) {
@@ -54,7 +67,7 @@ async function callGroqVision(userMessage, photoUrl, history, onFallback) {
       const groqPromise = groqAi.chat.completions.create({
         messages,
         model: model,
-        max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
+        max_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
         temperature: 0.7,
       });
 
@@ -93,11 +106,17 @@ async function callGroqText(userMessage, history, onFallback) {
   for (const modelStr of AI_CONFIG.TEXT_MODELS) {
     try {
       const isCerebras = modelStr.startsWith('cerebras/');
-      const actualModel = isCerebras ? modelStr.replace('cerebras/', '') : modelStr;
-      const client = isCerebras ? cerebrasAi : groqAi;
+      const isCloudflare = modelStr.startsWith('cloudflare/');
+      
+      const actualModel = modelStr.replace('cerebras/', '').replace('cloudflare/', '');
+      
+      let client = groqAi;
+      let providerName = 'Groq';
+      if (isCerebras) { client = cerebrasAi; providerName = 'Cerebras'; }
+      if (isCloudflare) { client = cloudflareAi; providerName = 'Cloudflare'; }
 
       if (!client) {
-        logger.warn(`${isCerebras ? 'Cerebras' : 'Groq'} client not initialized, skipping model ${modelStr}`);
+        logger.warn(`${providerName} client not initialized, skipping model ${modelStr}`);
         continue;
       }
 
@@ -111,7 +130,7 @@ async function callGroqText(userMessage, history, onFallback) {
       const aiPromise = client.chat.completions.create({
         messages,
         model: actualModel,
-        max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
+        max_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
         temperature: 0.7,
       });
 

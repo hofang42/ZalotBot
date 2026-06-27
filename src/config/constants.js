@@ -16,6 +16,7 @@ export const INPUT_LIMITS = {
 export const AI_CONFIG = {
   // Fallback text models: High to low priority
   TEXT_MODELS: [
+    'cloudflare/@cf/meta/llama-3.1-8b-instruct-fp8-fast',
     'cerebras/llama3.1-8b',
     'cerebras/llama-3.3-70b',
     'llama-3.1-8b-instant',
