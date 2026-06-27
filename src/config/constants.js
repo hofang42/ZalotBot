@@ -14,10 +14,16 @@ export const INPUT_LIMITS = {
 };
 
 export const AI_CONFIG = {
-  // Use 8B model to avoid hitting 70B strict rate limits (TPD)
-  GROQ_MODEL: 'llama-3.1-8b-instant',
-  // Qwen vision model for handling image inputs on Groq
-  GROQ_VISION_MODEL: 'qwen/qwen3.6-27b',
+  // Fallback text models: High to low priority
+  GROQ_MODELS: [
+    'llama-3.3-70b-versatile',
+    'llama-3.1-8b-instant',
+    'qwen/qwen3-32b'
+  ],
+  // Vision models
+  GROQ_VISION_MODELS: [
+    'qwen/qwen3.6-27b'
+  ],
   MAX_OUTPUT_TOKENS: 1024,
   TIMEOUT_MS: 20000,
 };

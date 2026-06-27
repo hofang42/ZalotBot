@@ -30,21 +30,36 @@ async function callGroqVision(userMessage, photoUrl, history) {
     }
   ];
 
-  logger.debug('Calling Groq API for Vision (Qwen)');
+  let lastError;
 
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
-  });
+  for (const model of AI_CONFIG.GROQ_VISION_MODELS) {
+    try {
+      logger.debug(`Calling Groq API for Vision (${model})`);
 
-  const groqPromise = groqAi.chat.completions.create({
-    messages,
-    model: AI_CONFIG.GROQ_VISION_MODEL,
-    max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
-    temperature: 0.7,
-  });
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
+      });
 
-  const response = await Promise.race([groqPromise, timeoutPromise]);
-  return response.choices[0]?.message?.content;
+      const groqPromise = groqAi.chat.completions.create({
+        messages,
+        model: model,
+        max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
+        temperature: 0.7,
+      });
+
+      const response = await Promise.race([groqPromise, timeoutPromise]);
+      return response.choices[0]?.message?.content;
+    } catch (error) {
+      lastError = error;
+      logger.warn({ model, err: error.message }, 'Groq vision model failed, trying next...');
+      // Continue to next model if timeout or rate limit
+      if (error.status !== 429 && error.message !== 'AbortError') {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 async function callGroqText(userMessage, history) {
@@ -59,21 +74,36 @@ async function callGroqText(userMessage, history) {
     { role: 'user', content: userMessage }
   ];
 
-  logger.debug('Calling Groq API for Text (Llama)');
+  let lastError;
 
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
-  });
+  for (const model of AI_CONFIG.GROQ_MODELS) {
+    try {
+      logger.debug(`Calling Groq API for Text (${model})`);
 
-  const groqPromise = groqAi.chat.completions.create({
-    messages,
-    model: AI_CONFIG.GROQ_MODEL,
-    max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
-    temperature: 0.7,
-  });
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
+      });
 
-  const response = await Promise.race([groqPromise, timeoutPromise]);
-  return response.choices[0]?.message?.content;
+      const groqPromise = groqAi.chat.completions.create({
+        messages,
+        model: model,
+        max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
+        temperature: 0.7,
+      });
+
+      const response = await Promise.race([groqPromise, timeoutPromise]);
+      return response.choices[0]?.message?.content;
+    } catch (error) {
+      lastError = error;
+      logger.warn({ model, err: error.message }, 'Groq text model failed, trying next...');
+      // Continue to next model if timeout or rate limit
+      if (error.status !== 429 && error.message !== 'AbortError') {
+        throw error;
+      }
+    }
+  }
+
+  throw lastError;
 }
 
 /**
