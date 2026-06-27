@@ -18,7 +18,9 @@ export const AI_CONFIG = {
   GROQ_MODELS: [
     'llama-3.3-70b-versatile',
     'llama-3.1-8b-instant',
-    'qwen/qwen3-32b'
+    'qwen/qwen3-32b',
+    'groq/compound',
+    'groq/compound-mini'
   ],
   // Vision models
   GROQ_VISION_MODELS: [
