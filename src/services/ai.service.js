@@ -140,8 +140,8 @@ async function callGroqText(userMessage, history, onFallback) {
     } catch (error) {
       lastError = error;
       logger.warn({ model: modelStr, err: error.message, status: error.status }, 'AI text model failed, trying next...');
-      // Continue to next model if timeout, rate limit, or server errors
-      const isRecoverable = error.message === 'AbortError' || [413, 429, 500, 502, 503, 504].includes(error.status);
+      // Continue to next model if timeout, rate limit, auth errors, bad requests, or server errors
+      const isRecoverable = error.message === 'AbortError' || [400, 401, 403, 404, 413, 429, 500, 502, 503, 504].includes(error.status);
       if (!isRecoverable) {
         throw error;
       }
