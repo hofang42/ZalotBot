@@ -21,9 +21,13 @@ export const sanitizeInput = (text) => {
 export const truncate = (text, maxLength) => {
   if (text.length <= maxLength) return text;
   
-  // Dùng Array.from để đếm đúng số lượng ký tự Unicode (emoji)
-  const chars = Array.from(text);
-  if (chars.length <= maxLength) return text;
+  let result = '';
+  const targetLength = Math.max(0, maxLength - 3);
   
-  return chars.slice(0, Math.max(0, maxLength - 3)).join('') + '...';
+  for (const char of Array.from(text)) {
+    if (result.length + char.length > targetLength) break;
+    result += char;
+  }
+  
+  return result + '...';
 };
