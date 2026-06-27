@@ -136,6 +136,7 @@ async function callGroqText(userMessage, history, onFallback) {
 
       const response = await Promise.race([aiPromise, timeoutPromise]);
       clearTimeout(timeoutId);
+      logger.info({ successfulModel: actualModel, provider: providerName }, 'AI request succeeded');
       return response.choices[0]?.message?.content;
     } catch (error) {
       lastError = error;
