@@ -16,12 +16,14 @@ export const processMessageJob = async (job) => {
   const userId = message.chat?.id;
   const rawText = message.text || message.caption || '';
   
-  // Zalo Bot Platform có thể trả ảnh ở message.photo hoặc message.attachments
-  let photoUrl = message.photo;
-  if (!photoUrl && message.attachments && message.attachments.length > 0) {
+  // Zalo Bot Platform có thể trả ảnh ở nhiều trường khác nhau
+  let photoUrl = message.photo || message.image || message.url || message.image_url || message.file_url;
+  if (!photoUrl && message.attachments && Array.isArray(message.attachments)) {
     const imgAttachment = message.attachments.find(a => a.type === 'image' || a.type === 'photo');
-    if (imgAttachment && imgAttachment.payload && imgAttachment.payload.url) {
-      photoUrl = imgAttachment.payload.url;
+    if (imgAttachment) {
+      photoUrl = imgAttachment.url || imgAttachment.payload?.url || imgAttachment.payload?.thumbnail;
+    } else if (message.attachments[0]) {
+      photoUrl = message.attachments[0].url || message.attachments[0].payload?.url;
     }
   }
 
@@ -41,16 +43,17 @@ export const processMessageJob = async (job) => {
     // Báo cho Zalo biết Bot đang xử lý
     await sendChatAction(userId, 'typing');
 
+    if (photoUrl === 'IMAGE_RECEIVED_BUT_NO_URL') {
+      // Thay vì gửi vào Groq để AI đóng vai, ta gửi trực tiếp cho người dùng luôn
+      const debugInfo = JSON.stringify(message).substring(0, 500);
+      await sendTextMessage(userId, `mẹ ơi con nhận được ảnh rồi mà Zalo gửi qua bị lỗi chi đó con không coi được hình. Mẹ thử gửi lại nha. (Lỗi ẩn: ${debugInfo})`);
+      return;
+    }
+
     const history = await getHistory(userId);
     
     // Gọi Groq Service
-    let aiResponse;
-    if (photoUrl === 'IMAGE_RECEIVED_BUT_NO_URL') {
-      const debugInfo = JSON.stringify(message).substring(0, 1000); // Truncate just in case
-      aiResponse = await generateResponse(`Mẹ ơi, hệ thống nhận được ảnh nhưng cấu trúc dữ liệu bị lỗi hoặc khác với tài liệu của Zalo. Đây là dữ liệu ẩn (chỉ dùng để con sửa lỗi): ${debugInfo}`, null, history);
-    } else {
-      aiResponse = await generateResponse(cleanText, photoUrl, history);
-    }
+    const aiResponse = await generateResponse(cleanText, photoUrl, history);
     
     const safeResponse = filterOutput(aiResponse);
     
