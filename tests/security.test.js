@@ -4,16 +4,16 @@ import { verifyZaloSecret } from '../src/middlewares/verifyZaloSecret.js';
 vi.mock('../src/config/index.js', () => ({
   default: {
     zalo: {
-      botToken: 'bot_token_123'
+      webhookSecret: 'test_token_123'
     }
   }
 }));
 
 describe('Security - Verify Secret (ZBP)', () => {
-  it('should pass with correct bot token in path', () => {
+  it('should pass with correct secret token in header', () => {
     const req = {
-      params: {
-        botToken: 'bot_token_123'
+      headers: {
+        'x-bot-api-secret-token': 'test_token_123'
       }
     };
     const res = {};
@@ -23,8 +23,8 @@ describe('Security - Verify Secret (ZBP)', () => {
     expect(next).toHaveBeenCalled();
   });
 
-  it('should return 401 with missing bot token', () => {
-    const req = { params: {} };
+  it('should return 403 with missing secret token', () => {
+    const req = { headers: {} };
     const res = {
       status: vi.fn().mockReturnThis(),
       json: vi.fn()
@@ -32,14 +32,14 @@ describe('Security - Verify Secret (ZBP)', () => {
     const next = vi.fn();
 
     verifyZaloSecret(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should return 401 with incorrect bot token', () => {
+  it('should return 403 with incorrect secret token', () => {
     const req = {
-      params: {
-        botToken: 'wrong_token'
+      headers: {
+        'x-bot-api-secret-token': 'wrong_token'
       }
     };
     const res = {
@@ -49,7 +49,7 @@ describe('Security - Verify Secret (ZBP)', () => {
     const next = vi.fn();
 
     verifyZaloSecret(req, res, next);
-    expect(res.status).toHaveBeenCalledWith(401);
+    expect(res.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 });

@@ -6,9 +6,9 @@ import { rateLimiter } from '../middlewares/rateLimiter.js';
 
 const router = Router();
 
-// Zalo Bot Platform webhook thường dùng URL có chứa token để bảo mật
+// Zalo Bot Platform Webhook API endpoint
 router.post(
-  '/:botToken',
+  '/',
   verifyZaloSecret,
   validatePayload,
   rateLimiter,

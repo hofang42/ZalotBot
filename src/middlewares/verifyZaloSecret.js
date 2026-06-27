@@ -3,16 +3,15 @@ import logger from '../utils/logger.js';
 
 /**
  * Verify webhook request.
- * Trong Zalo Bot Platform (giống Telegram), bảo mật Webhook thường được thực hiện 
- * bằng cách để URL chứa secret token. Ví dụ: /webhook/<BOT_TOKEN>
+ * Zalo Bot Platform gửi mã xác thực qua header X-Bot-Api-Secret-Token
  */
 export const verifyZaloSecret = (req, res, next) => {
-  const botToken = req.params.botToken?.trim();
-  const configToken = config.zalo.botToken?.trim();
+  const secretToken = req.headers['x-bot-api-secret-token'];
+  const configToken = config.zalo.webhookSecret;
 
-  if (botToken !== configToken) {
-    logger.warn({ pathToken: botToken, envTokenLength: configToken?.length }, 'Webhook request with invalid bot token in path');
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (secretToken !== configToken) {
+    logger.warn({ pathTokenLength: secretToken?.length, envTokenLength: configToken?.length }, 'Webhook request with invalid secret token in header');
+    return res.status(403).json({ error: 'Unauthorized', message: 'Invalid Secret Token' });
   }
 
   next();

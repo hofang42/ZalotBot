@@ -13,8 +13,10 @@ const config = {
   port: parseInt(process.env.PORT || '3000', 10),
   
   zalo: {
-    // Với Zalo Bot Platform (giống Telegram), chỉ cần BOT_TOKEN
+    // Với Zalo Bot Platform, dùng BOT_TOKEN
     botToken: requireEnv('ZALO_BOT_TOKEN'),
+    // Secret token dùng để verify webhook (Zalo gửi kèm trong header x-bot-api-secret-token)
+    webhookSecret: process.env.WEBHOOK_SECRET_TOKEN || requireEnv('ZALO_BOT_TOKEN'),
   },
 
   groq: {

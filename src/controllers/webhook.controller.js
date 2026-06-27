@@ -1,29 +1,32 @@
 import { addMessageJob } from '../services/queue.service.js';
 import logger from '../utils/logger.js';
 
+/**
+ * Handle incoming webhook from Zalo Bot Platform
+ */
 export const handleWebhook = async (req, res) => {
   try {
-    const { message } = req.body;
+    const payload = req.body;
+    const { event_name, message } = payload.result || {};
 
-    // Xác định sự kiện: nếu có message và có text
-    if (message && message.text) {
+    // Chỉ xử lý sự kiện có message text
+    if (event_name === 'message.text.received' && message && message.text) {
       const chatId = message.chat?.id;
       const msgId = message.message_id;
 
-      logger.info({ userId: chatId, msgId }, 'Received user message');
+      logger.info({ userId: chatId, msgId }, 'Received user text message');
       
-      // Đẩy vào queue để xử lý background
-      await addMessageJob(req.body);
+      // Đẩy nguyên payload của event vào queue
+      await addMessageJob(payload.result);
     } else {
-      logger.debug('Ignored non-text event');
+      logger.debug({ event_name }, 'Ignored non-text or unsupported event');
     }
 
-    // Luôn trả 200 OK ngay lập tức (Ack-then-process)
+    // Luôn trả về 200 OK để Zalo biết đã nhận được
     return res.status(200).json({ ok: true });
     
   } catch (error) {
     logger.error({ err: error }, 'Controller error handling webhook');
-    // Vẫn trả 200 để tránh Zalo retry liên tục khi hệ thống lỗi
     return res.status(200).json({ ok: false, description: 'Internal Server Error' });
   }
 };
