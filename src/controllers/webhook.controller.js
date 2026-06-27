@@ -10,12 +10,15 @@ export const handleWebhook = async (req, res) => {
     const { event_name, message } = payload;
 
     const isTextMessage = event_name === 'message.text.received' && message?.text;
-    const isImageMessage = event_name === 'message.image.received' && message?.photo;
+    const isImageMessage = event_name === 'message.image.received';
 
     // Chỉ xử lý sự kiện có message text hoặc image
     if (isTextMessage || isImageMessage) {
-      const chatId = message.chat?.id;
-      const msgId = message.message_id;
+      if (isImageMessage && !message?.photo) {
+        logger.info({ message }, 'Image message received but no photo field detected');
+      }
+      const chatId = message?.chat?.id;
+      const msgId = message?.message_id;
 
       logger.info({ userId: chatId, msgId, isImage: isImageMessage }, 'Received user message');
       

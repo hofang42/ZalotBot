@@ -6,7 +6,7 @@ const webhookSchema = Joi.object({
   message: Joi.object({
     message_id: Joi.string().required(),
     text: Joi.string().allow('', null),
-    photo: Joi.string().uri().optional(),
+    photo: Joi.string().optional(),
     caption: Joi.string().allow('', null).optional(),
     chat: Joi.object({
       id: Joi.string().required(),

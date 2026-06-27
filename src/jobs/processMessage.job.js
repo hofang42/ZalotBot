@@ -6,17 +6,18 @@ import { sendTextMessage, sendChatAction } from '../services/zalo.service.js';
 import { filterOutput } from '../utils/contentFilter.js';
 
 export const processMessageJob = async (job) => {
-  const { message } = job.data;
+  const payload = job.data;
+  const { event_name, message } = payload;
   
-  if (!message || (!message.text && !message.photo)) {
+  if (!message) {
     return;
   }
 
-  const userId = message.chat.id;
+  const userId = message.chat?.id;
   const rawText = message.text || message.caption || '';
-  const photoUrl = message.photo;
+  const photoUrl = message.photo || (event_name === 'message.image.received' ? 'IMAGE_RECEIVED_BUT_NO_URL' : null);
 
-  logger.info({ userId }, 'Processing message job');
+  logger.info({ userId, event_name, hasPhoto: !!message.photo }, 'Processing message job');
 
   try {
     const cleanText = sanitizeInput(rawText);
@@ -31,7 +32,12 @@ export const processMessageJob = async (job) => {
     const history = await getHistory(userId);
     
     // Gọi Groq Service
-    const aiResponse = await generateResponse(cleanText, photoUrl, history);
+    let aiResponse;
+    if (photoUrl === 'IMAGE_RECEIVED_BUT_NO_URL') {
+      aiResponse = await generateResponse("Mẹ vừa gửi một bức ảnh nhưng hệ thống không thể tải được ảnh. Mẹ có thể thử gửi lại không?", null, history);
+    } else {
+      aiResponse = await generateResponse(cleanText, photoUrl, history);
+    }
     
     const safeResponse = filterOutput(aiResponse);
     
