@@ -15,9 +15,21 @@ export const processMessageJob = async (job) => {
 
   const userId = message.chat?.id;
   const rawText = message.text || message.caption || '';
-  const photoUrl = message.photo || (event_name === 'message.image.received' ? 'IMAGE_RECEIVED_BUT_NO_URL' : null);
+  
+  // Zalo Bot Platform có thể trả ảnh ở message.photo hoặc message.attachments
+  let photoUrl = message.photo;
+  if (!photoUrl && message.attachments && message.attachments.length > 0) {
+    const imgAttachment = message.attachments.find(a => a.type === 'image' || a.type === 'photo');
+    if (imgAttachment && imgAttachment.payload && imgAttachment.payload.url) {
+      photoUrl = imgAttachment.payload.url;
+    }
+  }
 
-  logger.info({ userId, event_name, hasPhoto: !!message.photo }, 'Processing message job');
+  if (!photoUrl && event_name === 'message.image.received') {
+    photoUrl = 'IMAGE_RECEIVED_BUT_NO_URL';
+  }
+
+  logger.info({ userId, event_name, hasPhoto: photoUrl !== 'IMAGE_RECEIVED_BUT_NO_URL' }, 'Processing message job');
 
   try {
     const cleanText = sanitizeInput(rawText);
@@ -34,7 +46,8 @@ export const processMessageJob = async (job) => {
     // Gọi Groq Service
     let aiResponse;
     if (photoUrl === 'IMAGE_RECEIVED_BUT_NO_URL') {
-      aiResponse = await generateResponse("Mẹ vừa gửi một bức ảnh nhưng hệ thống không thể tải được ảnh. Mẹ có thể thử gửi lại không?", null, history);
+      const debugInfo = JSON.stringify(message).substring(0, 1000); // Truncate just in case
+      aiResponse = await generateResponse(`Mẹ ơi, hệ thống nhận được ảnh nhưng cấu trúc dữ liệu bị lỗi hoặc khác với tài liệu của Zalo. Đây là dữ liệu ẩn (chỉ dùng để con sửa lỗi): ${debugInfo}`, null, history);
     } else {
       aiResponse = await generateResponse(cleanText, photoUrl, history);
     }
