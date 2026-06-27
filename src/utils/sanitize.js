@@ -25,5 +25,5 @@ export const truncate = (text, maxLength) => {
   const chars = Array.from(text);
   if (chars.length <= maxLength) return text;
   
-  return chars.slice(0, maxLength).join('') + '...';
+  return chars.slice(0, Math.max(0, maxLength - 3)).join('') + '...';
 };
