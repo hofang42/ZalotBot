@@ -55,9 +55,38 @@ export const processMessageJob = async (job) => {
     // Gọi Groq Service
     const aiResponse = await generateResponse(cleanText, photoUrl, history);
     
-    const safeResponse = filterOutput(aiResponse);
+    // Lọc nội dung thô trước
+    let safeResponse = filterOutput(aiResponse);
     
-    await sendTextMessage(userId, safeResponse);
+    // Tìm thẻ [STICKER: KEYWORD]
+    let stickerKeyword = null;
+    const stickerRegex = /\[STICKER:\s*([A-Z]+)\]/i;
+    const match = safeResponse.match(stickerRegex);
+    if (match) {
+      stickerKeyword = match[1];
+      // Xóa thẻ khỏi tin nhắn
+      safeResponse = safeResponse.replace(stickerRegex, '').trim();
+    }
+    
+    // Gửi tin nhắn chữ
+    if (safeResponse) {
+      await sendTextMessage(userId, safeResponse);
+    }
+    
+    // Gửi sticker nếu có
+    if (stickerKeyword) {
+      const { getStickerUrl } = await import('../config/stickers.js');
+      const stickerUrl = getStickerUrl(stickerKeyword);
+      if (stickerUrl) {
+        // Zalo Service chưa hỗ trợ sendSticker, ta gọi hàm tự thêm vào zalo.service.js
+        const { sendSticker } = await import('../services/zalo.service.js');
+        try {
+          await sendSticker(userId, stickerUrl);
+        } catch (e) {
+          logger.warn({ err: e }, 'Failed to send sticker gracefully');
+        }
+      }
+    }
     
     await addToHistory(userId, cleanText, safeResponse);
 

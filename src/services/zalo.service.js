@@ -55,6 +55,33 @@ export const sendTextMessage = async (userId, text, retryCount = 1) => {
 };
 
 /**
+ * Gửi Sticker đến người dùng
+ * @param {string} userId ID người nhận
+ * @param {string} stickerUrl Đường dẫn sticker
+ */
+export const sendSticker = async (userId, stickerUrl) => {
+  const botToken = config.zalo.botToken;
+  if (!botToken) throw new Error('Missing ZALO_BOT_TOKEN');
+
+  const ZALO_API_URL = `https://bot-api.zaloplatforms.com/bot${botToken}/sendSticker`;
+  const payload = {
+    chat_id: userId,
+    sticker: stickerUrl
+  };
+
+  try {
+    const response = await axios.post(ZALO_API_URL, payload, {
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000
+    });
+    return response.data;
+  } catch (error) {
+    logger.error({ err: error.response?.data || error, userId }, 'Failed to send sticker');
+    throw error;
+  }
+};
+
+/**
  * Gửi trạng thái Chat Action (đang gõ, đang gửi ảnh)
  * @param {string} userId ID người nhận
  * @param {string} action 'typing' hoặc 'upload_photo'
