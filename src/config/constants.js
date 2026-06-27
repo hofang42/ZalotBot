@@ -32,6 +32,8 @@ export const AI_CONFIG = {
   ],
   // Vision models
   VISION_MODELS: [
+    'cloudflare/@cf/meta/llama-3.2-11b-vision-instruct',
+    'cloudflare/@cf/meta/llama-4-scout-17b-16e-instruct',
     'cloudflare/@cf/google/gemma-4-26b-a4b-it',
     'qwen/qwen3.6-27b'
   ],
