@@ -17,7 +17,7 @@ export const processMessageJob = async (job) => {
   const rawText = message.text || message.caption || '';
   
   // Zalo Bot Platform có thể trả ảnh ở nhiều trường khác nhau
-  let photoUrl = message.photo || message.image || message.url || message.image_url || message.file_url;
+  let photoUrl = message.photo || message.photo_url || message.image || message.url || message.image_url || message.file_url;
   if (!photoUrl && message.attachments && Array.isArray(message.attachments)) {
     const imgAttachment = message.attachments.find(a => a.type === 'image' || a.type === 'photo');
     if (imgAttachment) {
