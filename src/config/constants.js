@@ -14,8 +14,8 @@ export const INPUT_LIMITS = {
 };
 
 export const AI_CONFIG = {
-  // Llama 3.3 70B is highly recommended for reasoning on Groq
-  GROQ_MODEL: 'llama-3.3-70b-versatile',
+  // Use 8B model to avoid hitting 70B strict rate limits (TPD)
+  GROQ_MODEL: 'llama-3.1-8b-instant',
   // Qwen vision model for handling image inputs on Groq
   GROQ_VISION_MODEL: 'qwen/qwen3.6-27b',
   MAX_OUTPUT_TOKENS: 1024,
