@@ -16,10 +16,10 @@ export const INPUT_LIMITS = {
 export const AI_CONFIG = {
   // Fallback text models: High to low priority
   GROQ_MODELS: [
-    'llama-3.3-70b-versatile',
-    'llama-3.1-8b-instant',
-    'qwen/qwen3-32b',
     'groq/compound',
+    'llama-3.1-8b-instant',
+    'llama-3.3-70b-versatile',
+    'qwen/qwen3-32b',
     'groq/compound-mini'
   ],
   // Vision models
