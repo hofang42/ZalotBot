@@ -54,8 +54,9 @@ async function callGroqVision(userMessage, photoUrl, history, onFallback) {
     } catch (error) {
       lastError = error;
       logger.warn({ model, err: error.message, status: error.status }, 'Groq vision model failed, trying next...');
-      // Continue to next model if timeout or rate limit
-      if (error.status !== 429 && error.message !== 'AbortError') {
+      // Continue to next model if timeout, rate limit, or server errors
+      const isRecoverable = error.message === 'AbortError' || [413, 429, 500, 502, 503, 504].includes(error.status);
+      if (!isRecoverable) {
         throw error;
       }
       if (onFallback) await onFallback(model);
@@ -101,8 +102,9 @@ async function callGroqText(userMessage, history, onFallback) {
     } catch (error) {
       lastError = error;
       logger.warn({ model, err: error.message, status: error.status }, 'Groq text model failed, trying next...');
-      // Continue to next model if timeout or rate limit
-      if (error.status !== 429 && error.message !== 'AbortError') {
+      // Continue to next model if timeout, rate limit, or server errors
+      const isRecoverable = error.message === 'AbortError' || [413, 429, 500, 502, 503, 504].includes(error.status);
+      if (!isRecoverable) {
         throw error;
       }
       if (onFallback) await onFallback(model);
