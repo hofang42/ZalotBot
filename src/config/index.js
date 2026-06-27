@@ -20,7 +20,10 @@ const config = {
   },
 
   groq: {
-    apiKey: requireEnv('GROQ_API_KEY'),
+    apiKey: process.env.GROQ_API_KEY,
+  },
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
   },
 
   redis: {

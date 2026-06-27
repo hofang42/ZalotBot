@@ -13,13 +13,13 @@ export const INPUT_LIMITS = {
   MAX_MESSAGE_LENGTH: 2000,
 };
 
-export const GROQ_CONFIG = {
+export const AI_CONFIG = {
   // Llama 3.3 70B is highly recommended for reasoning on Groq
-  MODEL: 'llama-3.3-70b-versatile',
+  GROQ_MODEL: 'llama-3.3-70b-versatile',
   // Vision model for handling image inputs
-  VISION_MODEL: 'llama-3.2-90b-vision-preview',
+  GEMINI_VISION_MODEL: 'gemini-2.0-flash',
   MAX_OUTPUT_TOKENS: 1024,
-  TIMEOUT_MS: 15000,
+  TIMEOUT_MS: 20000,
 };
 
 export const CONVERSATION = {

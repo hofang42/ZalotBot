@@ -1,7 +1,7 @@
 import logger from '../utils/logger.js';
 import { sanitizeInput } from '../utils/sanitize.js';
 import { getHistory, addToHistory } from '../services/conversation.service.js';
-import { generateResponse } from '../services/groq.service.js';
+import { generateResponse } from '../services/ai.service.js';
 import { sendTextMessage, sendChatAction } from '../services/zalo.service.js';
 import { filterOutput } from '../utils/contentFilter.js';
 
