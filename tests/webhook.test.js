@@ -26,6 +26,26 @@ describe('Webhook Validation (ZBP)', () => {
     expect(next).toHaveBeenCalled();
   });
 
+  it('should pass valid image message payload', () => {
+    const req = {
+      body: {
+        event_name: 'message.image.received',
+        message: {
+          message_id: "msg2",
+          chat: { id: "user1" },
+          photo: "https://example.com/image.jpg",
+          caption: "A nice photo",
+          date: 123456789
+        }
+      }
+    };
+    const res = {};
+    const next = vi.fn();
+
+    validatePayload(req, res, next);
+    expect(next).toHaveBeenCalled();
+  });
+
   it('should reject invalid payload without event_name', () => {
     const req = {
       body: {
@@ -56,6 +76,30 @@ describe('Webhook Controller (ZBP)', () => {
           message_id: "msg1",
           chat: { id: "user1" },
           text: "Hello"
+        }
+      }
+    };
+    const res = {
+      status: vi.fn().mockReturnThis(),
+      json: vi.fn()
+    };
+
+    const { addMessageJob } = await import('../src/services/queue.service.js');
+    
+    await handleWebhook(req, res);
+    
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(addMessageJob).toHaveBeenCalledWith(req.body);
+  });
+
+  it('should process image messages', async () => {
+    const req = {
+      body: {
+        event_name: 'message.image.received',
+        message: {
+          message_id: "msg2",
+          chat: { id: "user1" },
+          photo: "https://example.com/image.jpg"
         }
       }
     };

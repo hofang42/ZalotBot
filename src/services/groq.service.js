@@ -12,15 +12,27 @@ try {
 }
 
 /**
- * Gọi Groq API với context
+ * Gọi Groq API với context và hỗ trợ hình ảnh (Vision)
  */
-export const generateResponse = async (userMessage, history = []) => {
+export const generateResponse = async (userMessage, photoUrl = null, history = []) => {
   if (!groq) {
     logger.error('Groq API client not initialized');
     return 'Xin lỗi, dịch vụ AI hiện không khả dụng.';
   }
 
   try {
+    let finalUserMessage = userMessage;
+    let modelToUse = GROQ_CONFIG.MODEL;
+
+    // Nếu có ảnh, chuyển sang model Vision và format lại payload
+    if (photoUrl) {
+      modelToUse = GROQ_CONFIG.VISION_MODEL || 'llama-3.2-90b-vision-preview';
+      finalUserMessage = [
+        { type: 'text', text: userMessage || 'Hãy mô tả hoặc trả lời câu hỏi về bức ảnh này.' },
+        { type: 'image_url', image_url: { url: photoUrl } }
+      ];
+    }
+
     // Format messages for Groq/OpenAI compatible API
     const messages = [
       { role: 'system', content: SYSTEM_INSTRUCTION },
@@ -28,7 +40,7 @@ export const generateResponse = async (userMessage, history = []) => {
         role: msg.role === 'model' ? 'assistant' : 'user',
         content: msg.content
       })),
-      { role: 'user', content: userMessage }
+      { role: 'user', content: finalUserMessage }
     ];
 
     logger.debug('Calling Groq API');
@@ -40,7 +52,7 @@ export const generateResponse = async (userMessage, history = []) => {
 
     const groqPromise = groq.chat.completions.create({
       messages,
-      model: GROQ_CONFIG.MODEL,
+      model: modelToUse,
       max_completion_tokens: GROQ_CONFIG.MAX_OUTPUT_TOKENS,
       temperature: 0.7,
     });

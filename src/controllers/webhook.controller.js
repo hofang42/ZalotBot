@@ -9,12 +9,15 @@ export const handleWebhook = async (req, res) => {
     const payload = req.body;
     const { event_name, message } = payload;
 
-    // Chỉ xử lý sự kiện có message text
-    if (event_name === 'message.text.received' && message && message.text) {
+    const isTextMessage = event_name === 'message.text.received' && message?.text;
+    const isImageMessage = event_name === 'message.image.received' && message?.photo;
+
+    // Chỉ xử lý sự kiện có message text hoặc image
+    if (isTextMessage || isImageMessage) {
       const chatId = message.chat?.id;
       const msgId = message.message_id;
 
-      logger.info({ userId: chatId, msgId }, 'Received user text message');
+      logger.info({ userId: chatId, msgId, isImage: isImageMessage }, 'Received user message');
       
       // Đẩy nguyên payload của event vào queue
       await addMessageJob(payload);
