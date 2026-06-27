@@ -1,15 +1,25 @@
 import Groq from 'groq-sdk';
+import Cerebras from '@cerebras/cerebras_cloud_sdk';
 import config from '../config/index.js';
 import { AI_CONFIG } from '../config/constants.js';
 import { SYSTEM_INSTRUCTION } from '../prompts/systemInstruction.js';
 import logger from '../utils/logger.js';
 
 let groqAi;
+let cerebrasAi;
 
 try {
   groqAi = new Groq({ apiKey: config.groq.apiKey });
 } catch (error) {
   logger.error({ err: error }, 'Failed to initialize Groq client');
+}
+
+try {
+  if (config.cerebras?.apiKey) {
+    cerebrasAi = new Cerebras({ apiKey: config.cerebras.apiKey });
+  }
+} catch (error) {
+  logger.error({ err: error }, 'Failed to initialize Cerebras client');
 }
 
 async function callGroqVision(userMessage, photoUrl, history, onFallback) {
@@ -80,34 +90,43 @@ async function callGroqText(userMessage, history, onFallback) {
 
   let lastError;
 
-  for (const model of AI_CONFIG.GROQ_MODELS) {
+  for (const modelStr of AI_CONFIG.TEXT_MODELS) {
     try {
-      logger.debug(`Calling Groq API for Text (${model})`);
+      const isCerebras = modelStr.startsWith('cerebras/');
+      const actualModel = isCerebras ? modelStr.replace('cerebras/', '') : modelStr;
+      const client = isCerebras ? cerebrasAi : groqAi;
+
+      if (!client) {
+        logger.warn(`${isCerebras ? 'Cerebras' : 'Groq'} client not initialized, skipping model ${modelStr}`);
+        continue;
+      }
+
+      logger.debug(`Calling AI API for Text (${modelStr})`);
 
       let timeoutId;
       const timeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
       });
 
-      const groqPromise = groqAi.chat.completions.create({
+      const aiPromise = client.chat.completions.create({
         messages,
-        model: model,
+        model: actualModel,
         max_completion_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
         temperature: 0.7,
       });
 
-      const response = await Promise.race([groqPromise, timeoutPromise]);
+      const response = await Promise.race([aiPromise, timeoutPromise]);
       clearTimeout(timeoutId);
       return response.choices[0]?.message?.content;
     } catch (error) {
       lastError = error;
-      logger.warn({ model, err: error.message, status: error.status }, 'Groq text model failed, trying next...');
+      logger.warn({ model: modelStr, err: error.message, status: error.status }, 'AI text model failed, trying next...');
       // Continue to next model if timeout, rate limit, or server errors
       const isRecoverable = error.message === 'AbortError' || [413, 429, 500, 502, 503, 504].includes(error.status);
       if (!isRecoverable) {
         throw error;
       }
-      if (onFallback) await onFallback(model);
+      if (onFallback) await onFallback(modelStr);
     }
   }
 

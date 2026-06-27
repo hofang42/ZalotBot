@@ -22,6 +22,9 @@ const config = {
   groq: {
     apiKey: process.env.GROQ_API_KEY,
   },
+  cerebras: {
+    apiKey: process.env.CEREBRAS_API_KEY,
+  },
   gemini: {
     apiKey: process.env.GEMINI_API_KEY,
   },
