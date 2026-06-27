@@ -52,8 +52,14 @@ export const processMessageJob = async (job) => {
 
     const history = await getHistory(userId);
     
+    // Hàm callback để hiển thị trạng thái typing khi AI switch model
+    const onFallback = async (failedModel) => {
+      logger.info({ userId, failedModel }, 'Model failed, sending typing action for fallback');
+      await sendChatAction(userId, 'typing');
+    };
+
     // Gọi Groq Service
-    const aiResponse = await generateResponse(cleanText, photoUrl, history);
+    const aiResponse = await generateResponse(cleanText, photoUrl, history, onFallback);
     
     // Lọc nội dung thô trước
     let safeResponse = filterOutput(aiResponse);

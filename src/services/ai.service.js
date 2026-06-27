@@ -12,7 +12,7 @@ try {
   logger.error({ err: error }, 'Failed to initialize Groq client');
 }
 
-async function callGroqVision(userMessage, photoUrl, history) {
+async function callGroqVision(userMessage, photoUrl, history, onFallback) {
   if (!groqAi) throw new Error('Groq client not initialized');
 
   const messages = [
@@ -56,13 +56,14 @@ async function callGroqVision(userMessage, photoUrl, history) {
       if (error.status !== 429 && error.message !== 'AbortError') {
         throw error;
       }
+      if (onFallback) await onFallback(model);
     }
   }
 
   throw lastError;
 }
 
-async function callGroqText(userMessage, history) {
+async function callGroqText(userMessage, history, onFallback) {
   if (!groqAi) throw new Error('Groq client not initialized');
 
   const messages = [
@@ -100,6 +101,7 @@ async function callGroqText(userMessage, history) {
       if (error.status !== 429 && error.message !== 'AbortError') {
         throw error;
       }
+      if (onFallback) await onFallback(model);
     }
   }
 
@@ -109,14 +111,14 @@ async function callGroqText(userMessage, history) {
 /**
  * Gọi AI (Groq Qwen cho ảnh, Groq Llama cho text)
  */
-export const generateResponse = async (userMessage, photoUrl = null, history = []) => {
+export const generateResponse = async (userMessage, photoUrl = null, history = [], onFallback = null) => {
   try {
     let replyText;
     
     if (photoUrl) {
-      replyText = await callGroqVision(userMessage, photoUrl, history);
+      replyText = await callGroqVision(userMessage, photoUrl, history, onFallback);
     } else {
-      replyText = await callGroqText(userMessage, history);
+      replyText = await callGroqText(userMessage, history, onFallback);
     }
     
     if (!replyText) {
