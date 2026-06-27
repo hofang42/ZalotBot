@@ -24,6 +24,13 @@ export const messageQueue = connection
  * @param {Object} data Dữ liệu tin nhắn
  */
 export const addMessageJob = async (data) => {
+  // Vercel serverless functions freeze immediately after response.
+  // We must process the job synchronously before returning 200 OK.
+  if (process.env.VERCEL) {
+    logger.info('Running in Vercel, processing job synchronously');
+    return processMessageJob({ data });
+  }
+
   if (!messageQueue) {
     logger.error('Queue is not initialized, cannot add job');
     // Nếu chạy không có Redis (như dev mode lười), xử lý đồng bộ luôn (fail-open strategy)
