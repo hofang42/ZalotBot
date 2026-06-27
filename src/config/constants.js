@@ -31,7 +31,8 @@ export const AI_CONFIG = {
     'allam-2-7b'
   ],
   // Vision models
-  GROQ_VISION_MODELS: [
+  VISION_MODELS: [
+    'cloudflare/@cf/google/gemma-4-26b-a4b-it',
     'qwen/qwen3.6-27b'
   ],
   MAX_OUTPUT_TOKENS: 1024,

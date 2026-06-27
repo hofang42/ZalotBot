@@ -35,9 +35,7 @@ try {
   logger.error({ err: error }, 'Failed to initialize Cloudflare client');
 }
 
-async function callGroqVision(userMessage, photoUrl, history, onFallback) {
-  if (!groqAi) throw new Error('Groq client not initialized');
-
+async function callVision(userMessage, photoUrl, history, onFallback) {
   const messages = [
     { role: 'system', content: SYSTEM_INSTRUCTION },
     ...history.map(msg => ({
@@ -55,34 +53,47 @@ async function callGroqVision(userMessage, photoUrl, history, onFallback) {
 
   let lastError;
 
-  for (const model of AI_CONFIG.GROQ_VISION_MODELS) {
+  for (const modelStr of AI_CONFIG.VISION_MODELS) {
     try {
-      logger.debug(`Calling Groq API for Vision (${model})`);
+      const isCloudflare = modelStr.startsWith('cloudflare/');
+      const actualModel = modelStr.replace('cloudflare/', '');
+      
+      let client = groqAi;
+      let providerName = 'Groq';
+      if (isCloudflare) { client = cloudflareAi; providerName = 'Cloudflare'; }
+
+      if (!client) {
+        logger.warn(`${providerName} client not initialized, skipping model ${modelStr}`);
+        continue;
+      }
+
+      logger.debug(`Calling AI API for Vision (${modelStr})`);
 
       let timeoutId;
       const timeoutPromise = new Promise((_, reject) => {
         timeoutId = setTimeout(() => reject(new Error('AbortError')), AI_CONFIG.TIMEOUT_MS);
       });
 
-      const groqPromise = groqAi.chat.completions.create({
+      const aiPromise = client.chat.completions.create({
         messages,
-        model: model,
+        model: actualModel,
         max_tokens: AI_CONFIG.MAX_OUTPUT_TOKENS,
         temperature: 0.7,
       });
 
-      const response = await Promise.race([groqPromise, timeoutPromise]);
+      const response = await Promise.race([aiPromise, timeoutPromise]);
       clearTimeout(timeoutId);
+      logger.info({ successfulModel: actualModel, provider: providerName }, 'AI vision request succeeded');
       return response.choices[0]?.message?.content;
     } catch (error) {
       lastError = error;
-      logger.warn({ model, err: error.message, status: error.status }, 'Groq vision model failed, trying next...');
-      // Continue to next model if timeout, rate limit, or server errors
-      const isRecoverable = error.message === 'AbortError' || [413, 429, 500, 502, 503, 504].includes(error.status);
+      logger.warn({ model: modelStr, err: error.message, status: error.status }, 'AI vision model failed, trying next...');
+      // Continue to next model if timeout, rate limit, auth errors, bad requests, or server errors
+      const isRecoverable = error.message === 'AbortError' || [400, 401, 403, 404, 413, 429, 500, 502, 503, 504].includes(error.status);
       if (!isRecoverable) {
         throw error;
       }
-      if (onFallback) await onFallback(model);
+      if (onFallback) await onFallback(modelStr);
     }
   }
 
@@ -161,7 +172,7 @@ export const generateResponse = async (userMessage, photoUrl = null, history = [
     let replyText;
     
     if (photoUrl) {
-      replyText = await callGroqVision(userMessage, photoUrl, history, onFallback);
+      replyText = await callVision(userMessage, photoUrl, history, onFallback);
     } else {
       replyText = await callGroqText(userMessage, history, onFallback);
     }
