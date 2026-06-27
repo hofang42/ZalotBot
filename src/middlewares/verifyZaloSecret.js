@@ -7,10 +7,11 @@ import logger from '../utils/logger.js';
  * bằng cách để URL chứa secret token. Ví dụ: /webhook/<BOT_TOKEN>
  */
 export const verifyZaloSecret = (req, res, next) => {
-  const { botToken } = req.params;
+  const botToken = req.params.botToken?.trim();
+  const configToken = config.zalo.botToken?.trim();
 
-  if (botToken !== config.zalo.botToken) {
-    logger.warn('Webhook request with invalid bot token in path');
+  if (botToken !== configToken) {
+    logger.warn({ pathToken: botToken, envTokenLength: configToken?.length }, 'Webhook request with invalid bot token in path');
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
